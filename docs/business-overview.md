@@ -71,3 +71,42 @@ outcomes:
 This is why data-level validation of claim status (querying the actual claim record, not just
 asserting on UI text) is treated as a first-class testing practice here, alongside RTM-driven
 requirement traceability to ensure none of these paths go untested release over release.
+
+## 7. Stakeholders / Involved Parties
+
+| Stakeholder | Role in this module |
+|---|---|
+| **Member / Patient** | Enrolls in a plan, receives care, views their own claims and coverage |
+| **Provider** | Delivers care, submits claims on the Member's behalf, views claim/rejection status |
+| **Payer** | Reviews and processes claims against plan coverage rules, determines claim outcome |
+| **Employer** | Purchases group plans, defines coverage rules that shape Payer review decisions |
+| **Platform Admin/Ops** | Manages platform configuration, monitors claim-processing SLAs and system health |
+| **Compliance Team** | Ensures claims handling and data practices meet healthcare regulatory requirements |
+| **QA/Product Team** | Maintains RTM, defines acceptance criteria, and owns cross-entity consistency as the core quality bar |
+
+## 8. Dependencies
+
+### Internal Platform Dependencies
+
+- **Enrollment Service** — the source of truth for which Member belongs to which Employer plan,
+  consumed by claim review to apply the correct coverage rules
+- **Claims Engine** — the authoritative claim-status record every one of the four portals must
+  read from (see section 5) — the single most load-bearing internal dependency in this platform
+- **Billing & Settlement Service** — consumes finalized claim data to process reimbursement
+- **Provider Network Service** — determines which Providers are recognized/covered under a given
+  plan, consulted during claim review
+- **Notification Service** — delivers status-change and rejection-reason notifications to
+  Provider and Member portals
+
+### External Dependencies
+
+- **Regulatory/Compliance Reporting Systems** — periodic reporting obligations tied to claims and
+  coverage data
+- **Payment/Reimbursement Rails** — settlement processing for approved claims (outside this
+  repo's scope, but a downstream consumer of Final-status claims)
+
+**Testing implication:** because the Claims Engine is read by all four portals, a regression
+there has the same "blast radius" characteristic seen in the fintech portfolio's shared-service
+model — a single incorrect field or stale cache at the source can silently manifest as a
+cross-entity inconsistency defect (see [`sample-defect-report.md`](../sample-defect-report.md)
+Defect #1) rather than an obviously-broken feature.

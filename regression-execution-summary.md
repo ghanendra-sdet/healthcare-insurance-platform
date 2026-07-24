@@ -40,3 +40,7 @@ from cross-entity consistency testing — a stale-status caching defect that wou
 invisible to any single-portal test suite. Both defects found this cycle were prioritized for
 fix-and-retest ahead of release, in line with the platform's shift-left approach to defect
 detection.
+
+**See also:** [`docs/business-overview.md`](./docs/business-overview.md) section 5 for the
+cross-entity consistency framing behind this test structure, and
+[`sample-defect-report.md`](./sample-defect-report.md) for the full worked defect examples.

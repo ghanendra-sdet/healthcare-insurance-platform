@@ -1,5 +1,9 @@
 # Healthcare Insurance Platform — Automation Framework
 
+> Automated scenarios trace directly to [`../regression-checklist.md`](../regression-checklist.md)
+> sections 1–3 (enrollment, claim submission/review, cross-entity consistency). See
+> [`../docs/README.md`](../docs/README.md) for the full documentation map.
+
 Automation for the Provider/Payer/Employer/Member claim lifecycle, built with **Playwright +
 TypeScript**, backed by REST Assured/Postman API coverage for CRUD operations.
 

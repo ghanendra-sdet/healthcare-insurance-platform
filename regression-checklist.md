@@ -1,6 +1,9 @@
 # Healthcare Insurance Platform — Regression Checklist & Test Cases
 
-> Sample regression suite structure with dummy data. Format: ID | Scenario | Steps | Expected Result
+> Sample regression suite structure with dummy data. Format: ID | Scenario | Steps | Expected Result.
+> See [`docs/business-overview.md`](./docs/business-overview.md) for why cross-entity consistency
+> (section 5) is treated as a first-class scenario here, and
+> [`docs/README.md`](./docs/README.md) for the full documentation map.
 
 ## 1. Enrollment
 
@@ -45,7 +48,19 @@
 | TC-017 | Update claim via API | 1. PATCH the claim's status | Update reflected immediately in subsequent GET calls |
 | TC-018 | Delete/void claim via API | 1. Attempt to void a dummy claim | Only permitted under defined business rules (e.g. not after settlement); enforced correctly |
 
-## 6. Full Regression Checklist
+## 6. UI Consistency
+
+> Derived from [`docs/ui-consistency.md`](./docs/ui-consistency.md) — cross-portal consistency,
+> not single-screen correctness.
+
+| ID | Scenario | Steps | Expected Result |
+|---|---|---|---|
+| TC-019 | Claim status label/color consistency | 1. Compare "Final"/"Need Review"/"Rejected"/"Submitted" labels across all four portals | Identical labels and colors everywhere |
+| TC-020 | Rejection reason text consistency | 1. Compare a rejected claim's reason text in the Provider and Member portals | Identical wording, no truncation differences |
+| TC-021 | Currency/date formatting consistency | 1. View the same claim amount and decision date across all four portals | Formatting matches exactly |
+| TC-022 | Claim status distinguishable without color | 1. View Final/Need Review/Rejected/Submitted badges with color/grayscale rendering simulated | Each remains distinguishable via icon/text label alone |
+
+## 7. Full Regression Checklist
 
 - [ ] Member Enrollment (individual / Employer group plan)
 - [ ] Provider Claim Submission
@@ -59,8 +74,9 @@
 - [ ] Billing & Settlement
 - [ ] Provider Network Management
 - [ ] Permissions / Role-Based Access (per entity type)
+- [ ] UI Consistency (status labeling, formatting, terminology, accessibility)
 
-## 7. Priority Automation Candidates
+## 8. Priority Automation Candidates
 
 1. Member enrollment (individual and group plan)
 2. Claim submission (Provider-initiated)
@@ -68,4 +84,4 @@
 4. Cross-entity consistency checks
 5. API CRUD coverage
 
-See [`automation/`](../automation) for the Playwright implementation.
+See [`automation/`](./automation) for the Playwright implementation.

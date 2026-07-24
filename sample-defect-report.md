@@ -1,7 +1,9 @@
 # Sample Defect Report — Healthcare Insurance Platform
 
 > Template + worked examples using dummy data. Reflects defect themes specific to a 4-entity
-> claims platform, where cross-portal consistency is the primary risk area.
+> claims platform, where cross-portal consistency is the primary risk area — see
+> [`docs/business-overview.md`](./docs/business-overview.md) section 5 for why, and
+> [`docs/README.md`](./docs/README.md) for the full documentation map.
 
 ## Defect Theme Taxonomy
 
