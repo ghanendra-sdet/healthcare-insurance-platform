@@ -30,8 +30,12 @@
 9. [Screenshots & Reports](#-screenshots--reports)
 10. [Repository Structure](#-repository-structure)
 
-> Deeper dives not covered inline in this README: [Stakeholders & Dependencies](./docs/business-overview.md),
-> [UI Consistency](./docs/ui-consistency.md) — see [`docs/README.md`](./docs/README.md) for the full map.
+> Deeper dives not covered inline in this README: [Modules, Submodules & Stakeholders](./docs/business-overview.md),
+> [Architecture, Flow & Real Sequence Diagrams](./docs/architecture-and-flow.md),
+> [Full Tech Stack & Skills Demonstrated](./docs/tech-and-skills.md), [UI Consistency](./docs/ui-consistency.md)
+> — see [`docs/README.md`](./docs/README.md) for the full map. **Every diagram in this repo is
+> drawn in Mermaid and renders natively right here on GitHub — nothing requires visiting another
+> site.**
 
 ---
 
@@ -100,11 +104,15 @@ claim lifecycle, from requirements through release sign-off.
 | Category | Tools |
 |---|---|
 | **UI Automation** | Playwright, TypeScript |
-| **API Testing** | REST Assured, Postman |
+| **API Testing & Automation** | REST Assured, Postman |
 | **Data-Level Testing** | SQL (direct claim/status validation) |
-| **Bug Tracking & Traceability** | JIRA, RTM (Requirement Traceability Matrix) |
+| **Performance Testing** | k6 (batch claim-submission throughput, adjudication-queue load) |
+| **Bug Tracking & Traceability** | JIRA, RTM (Requirement Traceability Matrix — see [`sample-rtm.md`](./sample-rtm.md)) |
 | **Process** | Agile/Scrum |
 | **Version Control** | Git, GitHub |
+
+> Full detail on *why* each tool was chosen, a skill → proof map, and the performance testing
+> approach in depth: [`docs/tech-and-skills.md`](./docs/tech-and-skills.md).
 
 ---
 
@@ -114,46 +122,39 @@ claim lifecycle, from requirements through release sign-off.
 - **API Testing** — complete CRUD operation validation
 - **Data-Level Testing** — validating claims across **Final / Need Review / Rejected** statuses
   directly at the data layer, not just what the UI displays
+- **Performance Testing** — batch claim-submission throughput and adjudication-queue load,
+  validated with k6 (see [`docs/tech-and-skills.md`](./docs/tech-and-skills.md) section 5 for the
+  full load/spike/soak approach applied to this specific domain)
 - **Regression Testing** — full suite run before every release
 - **Smoke & Sanity Testing** — post-deployment health checks
 - **Cross-Browser Testing**
 - **End-to-End (E2E) Automation**
 - **Requirement Traceability** — RTM prepared and maintained per release to confirm every
-  requirement has corresponding test coverage
+  requirement has corresponding test coverage (see [`sample-rtm.md`](./sample-rtm.md) for a
+  worked example, including how it surfaces real coverage gaps)
 
 ---
 
 ## 🔄 How It Works — Claim Lifecycle
 
-```
-Member enrolls under an Employer's group plan (or enrolls individually)
-        │
-        ▼
-Member receives care from a Provider
-        │
-        ▼
-Provider submits a claim on the Member's behalf
-        │
-        ▼
-Payer reviews the claim against the Employer's plan coverage rules
-        │
-        ▼
-Claim Status Determined:
-   ┌──────────┬──────────────┬──────────┐
-   │  FINAL   │ NEED REVIEW  │ REJECTED │
-   └──────────┴──────────────┴──────────┘
-        │             │             │
-        ▼             ▼             ▼
-  Settlement/   Routed for      Member/Provider
-  Reimbursement manual review   notified with reason
-  processed
+```mermaid
+flowchart TD
+    A["Member enrolls<br/>under an Employer's group plan, or individually"] --> B["Member receives care from a Provider"]
+    B --> C["Provider submits a claim<br/>on the Member's behalf (EDI 837)"]
+    C --> D["Clearinghouse scrubs the claim —<br/>validates codes, eligibility, format"]
+    D --> E["Payer adjudicates the claim<br/>against the Employer's plan coverage rules"]
+    E -->|Approved| F["FINAL<br/>Settlement/reimbursement processed, EDI 835/EOB issued"]
+    E -->|Missing info| G["NEED REVIEW<br/>routed for manual review"]
+    E -->|Not covered| H["REJECTED<br/>Member/Provider notified with reason"]
 ```
 
 **Testing implication:** because a single claim is visible (in different forms) to the Provider,
 the Payer, the Employer's plan context, and the Member, the highest-value defects are **data
 consistency issues between these four views** — a claim status shown as "Final" to the Member
 but still "Need Review" on the Payer's side is a much more damaging bug than any single-portal
-UI issue.
+UI issue. See [`docs/architecture-and-flow.md`](./docs/architecture-and-flow.md) for the full set
+of sequence diagrams — including exactly how that kind of stale-view defect happens under the
+hood.
 
 ### Why "Need Review" and "Rejected" Deserve Dedicated Test Focus
 
@@ -186,7 +187,9 @@ under-tests the other two outcomes. In practice:
 ## 🤖 Automation Approach
 
 Automation is built with **Playwright + TypeScript**, covering functional flows across all four
-entity portals, backed by REST Assured/Postman API coverage for CRUD operations.
+entity portals, backed by REST Assured/Postman API coverage for CRUD operations and k6 for
+batch claim-submission and adjudication-queue performance testing (see
+[`docs/tech-and-skills.md`](./docs/tech-and-skills.md) section 5).
 
 ### Priority Automated Scenarios
 
@@ -222,9 +225,9 @@ Full checklist with edge cases available in [`regression-checklist.md`](./regres
 
 ## 📸 Screenshots & Reports
 
-Sample test execution reports and defect report templates are available in
-[`regression-execution-summary.md`](./regression-execution-summary.md) and
-[`sample-defect-report.md`](./sample-defect-report.md).
+Sample test execution reports, defect report templates, and a worked Requirement Traceability
+Matrix are available in [`regression-execution-summary.md`](./regression-execution-summary.md),
+[`sample-defect-report.md`](./sample-defect-report.md), and [`sample-rtm.md`](./sample-rtm.md).
 
 ---
 
@@ -239,10 +242,14 @@ healthcare-insurance-platform/
 ├── README.md
 ├── regression-checklist.md          → Full regression suite + edge cases
 ├── sample-defect-report.md          → Defect theme taxonomy + worked defect examples
+├── sample-rtm.md                    → Worked Requirement Traceability Matrix, including real coverage gaps
 ├── regression-execution-summary.md  → Sample regression test execution report
 ├── docs/
 │   ├── README.md                    → 📍 Documentation map — start here
-│   ├── business-overview.md         → The 4-entity model, claim lifecycle, stakeholders, dependencies
+│   ├── business-overview.md         → The 4-entity model, modules/submodules, claim lifecycle, stakeholders
+│   ├── architecture-and-flow.md     → Real Mermaid sequence/flow diagrams: submission, adjudication,
+│   │                                    NEED REVIEW escalation, cross-entity consistency, Defect #1's mechanism
+│   ├── tech-and-skills.md           → Full tech stack (with why), skill → proof map, CI/CD shape, performance depth
 │   └── ui-consistency.md            → Cross-portal UI/UX consistency (status labeling, formatting, a11y)
 └── automation/
     ├── README.md                    → Framework setup & structure
