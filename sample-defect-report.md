@@ -39,7 +39,9 @@ view must never be ahead of the true underlying claim status.
 
 **Actual Result**
 The Member portal shows `FINAL`, apparently because it was caching the claim's status from an
-earlier polling cycle and never refreshed after the Payer's status change.
+earlier polling cycle and never refreshed after the Payer's status change. See
+[`docs/architecture-and-flow.md`](./docs/architecture-and-flow.md) section 5 for this exact
+mechanism shown as a sequence diagram.
 
 **Impact**
 A Member believes their claim is settled when it is not — this can lead to a Member proceeding

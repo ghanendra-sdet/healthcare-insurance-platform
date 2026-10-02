@@ -25,6 +25,10 @@
 
 ## 3. Cross-Entity Data Consistency (Highest Priority)
 
+> See [`docs/architecture-and-flow.md`](./docs/architecture-and-flow.md) section 5 for this
+> guarantee shown as a sequence diagram, including the exact stale-cache mechanism behind
+> `BUG-HIP-6014` in [`sample-defect-report.md`](./sample-defect-report.md).
+
 | ID | Scenario | Steps | Expected Result |
 |---|---|---|---|
 | TC-009 | Claim status consistent across all 4 portals | 1. Change a claim's status as Payer 2. Check Provider, Employer, and Member views | All four views show the identical, current status — no drift |
