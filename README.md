@@ -41,9 +41,9 @@
 
 ## 💡 What is a Healthcare Insurance Platform?
 
-A **SaaS Healthcare Insurance platform** manages the entire lifecycle of a health insurance
-policy — from enrollment through claims processing to billing — across **four distinct entity
-types**, each with a different relationship to the insurance process:
+A **SaaS Healthcare Insurance platform** manages a health insurance policy's full lifecycle, from
+enrollment through claims processing to billing, across **four distinct entity types** — each
+with a different relationship to the insurance process:
 
 | Entity | Who they are |
 |---|---|
@@ -52,13 +52,13 @@ types**, each with a different relationship to the insurance process:
 | **Employers** | Organizations that purchase group insurance plans and provide coverage to employees |
 | **Members / Patients** | Individuals enrolled in an insurance plan, accessing healthcare services and benefits |
 
-If you're new to fintech/health-tech QA, HR, or any non-technical role: think of it as a
-four-sided marketplace built around one core financial transaction — a **claim**. A Provider
+If you're new to fintech/health-tech QA, HR, or any non-technical role, think of it as a
+four-sided marketplace built around one core financial transaction: a **claim**. A Provider
 delivers care and submits a claim, a Payer decides whether and how much to pay, an Employer's
 plan defines what's covered, and a Member is the person the whole thing is ultimately for. Each
-side of this relationship needs its own portal, its own permissions, and its own view of the
-same underlying claim data — which is exactly why cross-entity data consistency is the module's
-central testing challenge.
+side needs its own portal, its own permissions, and its own view of the same underlying claim
+data. That shared dependency is exactly why cross-entity data consistency is the module's central
+testing challenge.
 
 ### Core Platform Features
 
@@ -139,32 +139,45 @@ claim lifecycle, from requirements through release sign-off.
 
 ```mermaid
 flowchart TD
-    A["Member enrolls<br/>under an Employer's group plan, or individually"] --> B["Member receives care from a Provider"]
-    B --> C["Provider submits a claim<br/>on the Member's behalf (EDI 837)"]
-    C --> D["Clearinghouse scrubs the claim —<br/>validates codes, eligibility, format"]
-    D --> E["Payer adjudicates the claim<br/>against the Employer's plan coverage rules"]
-    E -->|Approved| F["FINAL<br/>Settlement/reimbursement processed, EDI 835/EOB issued"]
-    E -->|Missing info| G["NEED REVIEW<br/>routed for manual review"]
-    E -->|Not covered| H["REJECTED<br/>Member/Provider notified with reason"]
+    A["🧑 Member enrolls<br/>under an Employer's group plan, or individually"] --> B["🩺 Member receives care from a Provider"]
+    B --> C["🏥 Provider submits a claim<br/>on the Member's behalf (EDI 837)"]
+    C --> D["🔍 Clearinghouse scrubs the claim<br/>validates codes, eligibility, format"]
+    D --> E{"⚖️ Payer adjudicates the claim<br/>against the Employer's plan coverage rules"}
+    E -->|Approved| F["✅ FINAL<br/>Settlement/reimbursement processed, EDI 835/EOB issued"]
+    E -->|Missing info| G["⏳ NEED REVIEW<br/>routed for manual review"]
+    E -->|Not covered| H["❌ REJECTED<br/>Member/Provider notified with reason"]
+
+    classDef person fill:#1a237e,color:#fff,stroke:#5c6bc0,stroke-width:1px
+    classDef service fill:#004d40,color:#fff,stroke:#26a69a,stroke-width:1px
+    classDef gate fill:#4a148c,color:#fff,stroke:#ab47bc,stroke-width:1px
+    classDef good fill:#1b5e20,color:#fff,stroke:#43a047,stroke-width:1px
+    classDef warn fill:#e65100,color:#fff,stroke:#fb8c00,stroke-width:1px
+    classDef bad fill:#b71c1c,color:#fff,stroke:#e53935,stroke-width:1px
+
+    class A,B person
+    class C service
+    class D,E gate
+    class F good
+    class G warn
+    class H bad
 ```
 
-**Testing implication:** because a single claim is visible (in different forms) to the Provider,
-the Payer, the Employer's plan context, and the Member, the highest-value defects are **data
-consistency issues between these four views** — a claim status shown as "Final" to the Member
-but still "Need Review" on the Payer's side is a much more damaging bug than any single-portal
-UI issue. See [`docs/architecture-and-flow.md`](./docs/architecture-and-flow.md) for the full set
-of sequence diagrams — including exactly how that kind of stale-view defect happens under the
-hood.
+**Testing implication:** a single claim is visible, in different forms, to the Provider, the
+Payer, the Employer's plan context, and the Member — so the highest-value defects are **data
+consistency issues between these four views**. A claim status shown as "Final" to the Member but
+still "Need Review" on the Payer's side causes far more damage than any single-portal UI issue.
+See [`docs/architecture-and-flow.md`](./docs/architecture-and-flow.md) for the full set of
+sequence diagrams, including exactly how that kind of stale-view defect happens under the hood.
 
-### Why "Need Review" and "Rejected" Deserve Dedicated Test Focus
+### Need Review and Rejected Claims Need Their Own Test Focus
 
-A naive test suite validates the happy path (claim submitted → approved → paid) thoroughly and
-under-tests the other two outcomes. In practice:
+A test suite that only covers the happy path (claim submitted → approved → paid) leaves two
+real failure modes under-tested:
 
-- **Need Review** claims must be correctly routed and must not silently stall — a claim that
-  never resolves out of "Need Review" is effectively a lost claim
-- **Rejected** claims must carry a clear, correct reason back to both the Provider and the
-  Member — an unexplained rejection generates disproportionate support burden
+- A **Need Review** claim must be routed correctly and must not silently stall — one that never
+  resolves out of "Need Review" is effectively a lost claim
+- A **Rejected** claim must carry a clear, correct reason back to both the Provider and the
+  Member, or it generates disproportionate support burden
 
 ---
 
