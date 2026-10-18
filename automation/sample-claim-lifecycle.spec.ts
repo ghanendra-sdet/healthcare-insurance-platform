@@ -20,6 +20,10 @@ class ProviderPortalPage {
     await this.page.goto('/provider/claims/new');
   }
 
+  async gotoClaim(claimId: string) {
+    await this.page.goto(`/provider/claims/${claimId}`);
+  }
+
   async submitClaim(memberId: string, amount: string, serviceCode: string) {
     await this.page.getByLabel('Member ID').fill(memberId);
     await this.page.getByLabel('Claim Amount').fill(amount);
@@ -116,6 +120,7 @@ test.describe('Healthcare Insurance Platform — Claim Lifecycle', () => {
     await payer.goto(dummyClaimId);
     await payer.rejectClaim(dummyReason);
 
+    await provider.gotoClaim(dummyClaimId);
     await member.goto(dummyClaimId);
 
     const providerReason = await provider.getRejectionReason();
