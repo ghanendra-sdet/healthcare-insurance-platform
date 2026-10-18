@@ -4,13 +4,13 @@
 > Provider, Payer, Employer, and Member (see [`business-overview.md`](./business-overview.md)).
 > This document covers whether it's represented **consistently** across all four.
 
-## Why This Matters More Here Than in Most Modules
+## What's at Stake When These Four Views Drift
 
 Per [`business-overview.md`](./business-overview.md) section 5, this platform's central risk is
-cross-entity data consistency — and the UI is where that inconsistency actually surfaces to a
-real person. A claim shown as "Final" in one portal and "Need Review" in another isn't just a
-rendering bug — it's a Member believing they're reimbursed when they're not, or a Provider unable
-to see why a claim was denied (see [`sample-defect-report.md`](../sample-defect-report.md)
+cross-entity data consistency, and the UI is where that inconsistency actually reaches a real
+person. A claim shown as "Final" in one portal and "Need Review" in another isn't just a
+rendering bug. It's a Member believing they're reimbursed when they're not, or a Provider who
+can't see why a claim was denied (see [`sample-defect-report.md`](../sample-defect-report.md)
 Defects #1–2). UI consistency here is a direct proxy for data correctness.
 
 ## 1. Claim Status Representation Consistency
