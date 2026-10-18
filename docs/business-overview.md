@@ -4,7 +4,7 @@
 > document explains the four-entity model and claim lifecycle before you look at any test case
 > or code.
 
-## 1. What problem does it solve?
+## 1. What Problem Does It Solve?
 
 Health insurance involves four parties who each see the same underlying event — a claim — very
 differently. A SaaS Healthcare Insurance platform gives each party (Provider, Payer, Employer,
@@ -15,7 +15,7 @@ all of them.
 
 ### Providers
 Healthcare professionals, dental practitioners, and medical facilities that deliver care and
-submit claims — often on behalf of the Member they treated.
+submit claims, often on behalf of the Member they treated.
 
 ### Payers
 Insurance companies that offer health plans and are responsible for reviewing and processing
@@ -26,12 +26,12 @@ Organizations that purchase group insurance plans and extend healthcare coverage
 employees. An Employer's plan defines the coverage rules a Payer applies when reviewing a claim.
 
 ### Members / Patients
-Individuals enrolled in an insurance plan — either through an Employer's group plan or
-individually — who access healthcare services and benefits.
+Individuals enrolled in an insurance plan, either through an Employer's group plan or
+individually, who access healthcare services and benefits.
 
 ### Core Modules and Their Submodules
 
-The four entities above are *who* uses the platform. These are the modules that actually do the
+The four entities above are *who* uses the platform. The modules below are what actually do the
 work underneath them — the level of detail a test plan or automation suite needs, not just a
 product-brochure feature list. The last column names which skill category (see
 [`tech-and-skills.md`](./tech-and-skills.md)) is the primary way that module gets tested.
@@ -46,21 +46,47 @@ product-brochure feature list. The last column names which skill category (see
 | **Four Entity Portals** | Role-based UI per entity · Claim/coverage visibility scoped to that entity | Giving each entity its own correctly-scoped, *consistent* view of the same underlying claim data | UI Automation |
 | **Notification Service** | Status-change alerts · Rejection-reason delivery | Keeping Provider and Member informed as a claim's status changes | Functional Testing |
 
-**Why Claims Engine and Adjudication are listed as two separate modules, not one "claims
-processing" module:** they fail in different ways and get fixed by different people. A
-Clearinghouse-scrubbing defect (an invalid procedure code slipping through) is a data-validation
-bug; an Adjudication defect (the wrong coverage rule applied) is a business-logic bug. Testing
-them as one undifferentiated module makes it harder to tell, from a failing test alone, which
-team actually owns the fix — see [`architecture-and-flow.md`](./architecture-and-flow.md)
-section 1 for how this split maps onto the actual system architecture.
+**Why Claims Engine and Adjudication are two separate modules, not one "claims processing"
+module:** they fail in different ways and get fixed by different people. A Clearinghouse-scrubbing
+defect (an invalid procedure code slipping through) is a data-validation bug. An Adjudication
+defect (the wrong coverage rule applied) is a business-logic bug. Testing them as one
+undifferentiated module makes it harder to tell, from a failing test alone, which team actually
+owns the fix — see [`architecture-and-flow.md`](./architecture-and-flow.md) section 1 for how this
+split maps onto the actual system architecture.
 
-## 3. The Claim Lifecycle, in Plain Terms
+## 3. The Claim Lifecycle — Who Does What
 
-1. A **Member** is enrolled under a plan (via an Employer, or individually)
-2. The Member receives care from a **Provider**
-3. The **Provider** submits a claim
-4. The **Payer** reviews the claim against the **Employer**'s plan coverage rules
-5. The claim resolves to one of three statuses: **Final**, **Need Review**, or **Rejected**
+```mermaid
+flowchart LR
+    M["🧑 Member<br/>enrolls under a plan"] --> C["🩺 Receives care<br/>from a Provider"]
+    C --> P["🏥 Provider<br/>submits a claim"]
+    P --> E["🏢 Employer's plan<br/>sets the coverage rules"]
+    E --> A{"⚖️ Payer<br/>reviews against those rules"}
+    A -->|Approved| F["✅ Final"]
+    A -->|Missing info| N["⏳ Need Review"]
+    A -->|Not covered| R["❌ Rejected"]
+
+    classDef person fill:#1a237e,color:#fff,stroke:#5c6bc0,stroke-width:1px
+    classDef service fill:#004d40,color:#fff,stroke:#26a69a,stroke-width:1px
+    classDef gate fill:#4a148c,color:#fff,stroke:#ab47bc,stroke-width:1px
+    classDef good fill:#1b5e20,color:#fff,stroke:#43a047,stroke-width:1px
+    classDef warn fill:#e65100,color:#fff,stroke:#fb8c00,stroke-width:1px
+    classDef bad fill:#b71c1c,color:#fff,stroke:#e53935,stroke-width:1px
+
+    class M,C person
+    class P service
+    class E,A gate
+    class F good
+    class N warn
+    class R bad
+```
+
+This is the same lifecycle [`architecture-and-flow.md`](./architecture-and-flow.md) section 3
+walks through at the system level (Clearinghouse scrubbing, EDI 837/835). This version is about
+who is responsible for each handoff, not how the system carries it out: a Member enrolls, a
+Provider delivers care and submits the claim, an Employer's plan sets the rules the claim gets
+measured against, and a Payer makes the call. The claim resolves to one of three statuses:
+**Final**, **Need Review**, or **Rejected**.
 
 ## 4. Glossary
 
@@ -84,14 +110,14 @@ section 1 for how this split maps onto the actual system architecture.
 ## 5. Why Cross-Entity Consistency Is the Central Testing Theme
 
 The same claim is visible, in different forms, to all four entities. The highest-value defects
-in this platform are **consistency gaps between these views** — not isolated single-portal bugs:
+in this platform are consistency gaps between these views, not isolated single-portal bugs:
 
 - Does the Payer's claim status match what the Member sees?
 - Does the Provider see the correct rejection reason when a claim is denied?
 - Does an Employer's plan-level coverage change correctly propagate to claims reviewed
   afterward, without corrupting already-settled claims?
 
-## 6. Why "Need Review" and "Rejected" Need Dedicated Focus
+## 6. Need Review and Rejected Claims Carry Real Risk if Left Untested
 
 It's easy to thoroughly test the happy path (submitted → Final) and under-test the other two
 outcomes:
@@ -100,9 +126,9 @@ outcomes:
 - A **Rejected** claim without a clear, correct reason generates disproportionate support burden
   and erodes trust in the platform
 
-This is why data-level validation of claim status (querying the actual claim record, not just
-asserting on UI text) is treated as a first-class testing practice here, alongside RTM-driven
-requirement traceability to ensure none of these paths go untested release over release.
+This is why data-level validation of claim status — querying the actual claim record, not just
+asserting on UI text — is treated as a first-class testing practice here, alongside RTM-driven
+requirement traceability that keeps these paths from going untested release over release.
 
 ## 7. Stakeholders / Involved Parties
 
@@ -124,9 +150,9 @@ requirement traceability to ensure none of these paths go untested release over 
   consumed by claim review to apply the correct coverage rules
 - **Clearinghouse** — validates and standardizes every claim (format, procedure/diagnosis codes,
   eligibility) before it ever reaches adjudication — see
-  [`architecture-and-flow.md`](./architecture-and-flow.md) sections 1–3; a defect here looks like
-  a "claim rejected for no reason" bug unless it's correctly attributed to this stage rather than
-  to adjudication itself
+  [`architecture-and-flow.md`](./architecture-and-flow.md) sections 1–3; a defect here can look
+  like a "claim rejected for no reason" bug unless it's correctly attributed to this stage rather
+  than to adjudication itself
 - **Claims Engine** — the authoritative claim-status record every one of the four portals must
   read from (see section 5) — the single most load-bearing internal dependency in this platform
 - **Billing & Settlement Service** — consumes finalized claim data to generate the EDI 835
@@ -147,7 +173,7 @@ requirement traceability to ensure none of these paths go untested release over 
   repo's scope, but a downstream consumer of Final-status claims)
 
 **Testing implication:** because the Claims Engine is read by all four portals, a regression
-there has the same "blast radius" characteristic seen in the fintech portfolio's shared-service
-model — a single incorrect field or stale cache at the source can silently manifest as a
-cross-entity inconsistency defect (see [`sample-defect-report.md`](../sample-defect-report.md)
-Defect #1) rather than an obviously-broken feature.
+there has an outsized blast radius — a single incorrect field or stale cache at the source can
+silently manifest as a cross-entity inconsistency defect (see
+[`sample-defect-report.md`](../sample-defect-report.md) Defect #1) rather than an obviously
+broken feature.
